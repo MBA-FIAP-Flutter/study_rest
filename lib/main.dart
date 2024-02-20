@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:study_rest/rest/rest_client.dart';
+import 'package:logger/logger.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,13 +33,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  final logger = Logger();
+  final TextEditingController _controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -45,25 +44,50 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            TextFormField(
+              controller: _controller,
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            const SizedBox(height: 16,),
+            ElevatedButton(
+              onPressed: (){
+                final dio = Dio();
+                dio.interceptors.add(
+                  InterceptorsWrapper(
+                    onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
+                      // Do something before request is sent.
+                      // If you want to resolve the request with custom data,
+                      // you can resolve a `Response` using `handler.resolve(response)`.
+                      // If you want to reject the request with a error message,
+                      // you can reject with a `DioException` using `handler.reject(dioError)`.
+                      return handler.next(options);
+                    },
+                    onResponse: (Response response, ResponseInterceptorHandler handler) {
+                      // Do something with response data.
+                      // If you want to reject the request with a error message,
+                      // you can reject a `DioException` object using `handler.reject(dioError)`.
+                      return handler.next(response);
+                    },
+                    onError: (DioException error, ErrorInterceptorHandler handler) {
+                      // Do something with response error.
+                      // If you want to resolve the request with some custom data,
+                      // you can resolve a `Response` object using `handler.resolve(response)`.
+                      return handler.next(error);
+                    },
+                  ),
+                );
+                final client = RestClient(dio);
+
+                client.getRepoGeneral(_controller.text).then((it) => logger.i(it));
+              },
+              child: const Text("Buscar"))
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),// This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
