@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:study_rest/controllers/general_controller.dart';
+import 'package:study_rest/controllers/unique_controller.dart';
+import 'package:study_rest/pages/detail_page.dart';
+import 'package:study_rest/pages/repos_page.dart';
 import 'package:study_rest/rest/rest_client.dart';
 import 'package:logger/logger.dart';
+import 'package:get/get.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +23,12 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const MyHomePage(title: 'Flutter Demo Home Page'),
+        '/repos': (context) => ReposPage(),
+        '/detail': (context) => DetailPage(),
+      },
     );
   }
 }
@@ -36,6 +46,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   final logger = Logger();
   final TextEditingController _controller = TextEditingController();
+
+  late RestClient client;
+
+  @override
+  void initState() {
+    super.initState();
+    final dio = Dio();
+    client = RestClient(dio);
+    Get.put(client);
+    Get.put(GeneralController());
+    Get.put(UniqueController());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,34 +77,8 @@ class _MyHomePageState extends State<MyHomePage> {
             const SizedBox(height: 16,),
             ElevatedButton(
               onPressed: (){
-                final dio = Dio();
-                dio.interceptors.add(
-                  InterceptorsWrapper(
-                    onRequest: (RequestOptions options, RequestInterceptorHandler handler) {
-                      // Do something before request is sent.
-                      // If you want to resolve the request with custom data,
-                      // you can resolve a `Response` using `handler.resolve(response)`.
-                      // If you want to reject the request with a error message,
-                      // you can reject with a `DioException` using `handler.reject(dioError)`.
-                      return handler.next(options);
-                    },
-                    onResponse: (Response response, ResponseInterceptorHandler handler) {
-                      // Do something with response data.
-                      // If you want to reject the request with a error message,
-                      // you can reject a `DioException` object using `handler.reject(dioError)`.
-                      return handler.next(response);
-                    },
-                    onError: (DioException error, ErrorInterceptorHandler handler) {
-                      // Do something with response error.
-                      // If you want to resolve the request with some custom data,
-                      // you can resolve a `Response` object using `handler.resolve(response)`.
-                      return handler.next(error);
-                    },
-                  ),
-                );
-                final client = RestClient(dio);
-
-                client.getRepoGeneral(_controller.text).then((it) => logger.i(it));
+                Get.find<GeneralController>().getRepoGeneral(_controller.text);
+                Navigator.pushNamed(context, '/repos', arguments: {"user": _controller.text});
               },
               child: const Text("Buscar"))
           ],
