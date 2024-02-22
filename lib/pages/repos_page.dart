@@ -20,7 +20,7 @@ class ReposPage extends GetView<GeneralController> {
               itemBuilder: (context, index) => InkWell(
                 onTap: () {
                   Get.find<UniqueController>().getRepoUnique(Get.find<GeneralController>().lastUser ?? "", state?[index].name ?? "");
-                  Navigator.pushNamed(context, '/detail');
+                  Get.toNamed('/detail');
                 },
                 child: Padding(
                   padding: const EdgeInsets.all(12.0),

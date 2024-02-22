@@ -22,3 +22,4 @@ class RepoUnique {
 
   Map<String, dynamic> toJson() => _$RepoUniqueToJson(this);
 }
+
